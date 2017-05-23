@@ -44,7 +44,7 @@ function fireWhenAllReady() {
   });
   if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
     && chatReady) {
-    //buildChannelChat();
+    buildChannelChat();
     displayChat();
   } else {
     setTimeout(fireWhenAllReady,500);
@@ -88,7 +88,7 @@ function processUsers(userJSON) {
       "avatar": user.profile.image_24
     }
   });
-  updateProgressPercentage(3);
+  updateProgressPercentage(2);
 }
 
 function getChannelChat() {
@@ -103,61 +103,74 @@ function getChannelChat() {
         );
       }
     );
-    updateProgressPercentage(1);
+    updateProgressPercentage(0.5);
   });
 }
 
 function buildChannelChat() {
-  // TODO
   channelIds.forEach(function(idObj) {
-    channelData[idObj.id]["messages"]
+    var div = $('<div></div>');
+    var channelChat = div.clone().addClass("col-lg-10 col-md-10 col-sm-9 col-xs-6");
+    var header = div.clone().addClass("table-responsive");
+    header.html(
+      "<table class='table'><tr><td class='channelheadertd'>" +
+      "<h2 class='channelheader'>" +
+        idObj.name +
+      "</h2></td>" +
+      "<td class='channelheadertd'><h4 class='channelpurpose'>" +
+        channelData[idObj.id]["purpose"] +
+      "</h4></td><td class='channelheadertd'><b class='channelarchived'>" +
+        "[Archived: " + channelData[idObj.id]["is_archived"] +
+      "]</b></td></tr></table>"
+    );
+    channelChat.append(header);
+    /*var tableWrapper = div.clone().addClass("table-responsive");
+    channelData[idObj.id]["messages"].forEach(function(msg) {
+      var table = $('<table></table>');//.addClass('table table-striped');
+      var tr = $('<tr></tr>');
+      var td = $('<td></td>');
+      var tbody = $('<tbody></tbody>');
+
+      var row = tr.clone();
+      row.append(td.clone().text(channelData[id]["name"])); // name
+      row.append(td.clone().text(channelData[id]["is_archived"])); // is_archived
+      row.append(td.clone().text(channelData[id]["purpose"])); // purpose
+      tbody.append(row);
+      table.append(tbody);
+      table.DataTable({
+        paging: false,
+        "order": [[ 1, 'asc' ],[ 0, 'asc' ]]
+      });
+    });*/
     updateProgressPercentage(2);
+    channelData[idObj.id]["html"] = channelChat;
   });
 }
 
 function displayChat() {
   var div = $('<div></div>');
   var anchor = $('<a></a>')
-  var table = $('<table></table>');//.addClass('table table-striped');
-  var tr = $('<tr></tr>');
-  var td = $('<td></td>');
-  var tbody = $('<tbody></tbody>');
-  // left nav for channels
   var channelNav = div.clone().addClass("col-lg-2 col-md-2 col-sm-3 col-xs-4");
   var bsListGrpChan = div.clone().addClass("list-group");
   channelIds.forEach(function(idObj) {
     var channelLink = anchor.clone().addClass("list-group-item")
-      .text(channelData[idObj.id]["name"]);
+      .attr("id",idObj.id).text(channelData[idObj.id]["name"]);
     channelLink.click(function() {
-      displayChannelChat(idObj.id);
-      $(".list-group-item").removeClass("active");
-      $(this).addClass("active");
+      displayChannelChat(this, idObj.id);
     });
     bsListGrpChan.append(channelLink);
     updateProgressPercentage(0.25);
   });
   channelNav.append(bsListGrpChan);
-
-  //fill out the table body
-  /*channelIds.forEach(function(id) {
-    var row = tr.clone();
-    row.append(td.clone().text(channelData[id]["name"])); // name
-    row.append(td.clone().text(channelData[id]["is_archived"])); // is_archived
-    row.append(td.clone().text(channelData[id]["purpose"])); // purpose
-    tbody.append(row);
-  });
-  table.append(tbody);
-  table.DataTable({
-    paging: false,
-    "order": [[ 1, 'asc' ],[ 0, 'asc' ]]
-  });*/
   hideProgress();
   $("#zip-output").append(channelNav);
+  $("#"+channelIds[0].id).trigger('click');
 }
 
-function displayChannelChat(channelId) {
-  //TODO
-  alert("HEY " + channelId);
+function displayChannelChat(link, channelId) {
+  $("#zip-output").append(channelData[channelId]["html"]);
+  $(".list-group-item").removeClass("active");
+  $(link).addClass("active");
 }
 
 function showProgress() {

@@ -18,3 +18,18 @@ footer {
 #progress {
   padding-top: 20px;
 }
+
+.channelheadertd {
+  vertical-align: middle;
+  border-top: 0px !important;
+}
+
+.channelheader {
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+}
+
+.channelpurpose .channelarchived {
+  color: darkgrey;
+  padding-left: 10px;
+}
