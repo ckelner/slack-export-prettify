@@ -2,10 +2,12 @@
   Evil global vars
 */
 var zipContent = null;
+var channelData = {};
+var channelIds = [];
+var userData = {};
+var chatDataComplete = false;
 
-/*
-  zipObject: the JSZip ZipObject from the slack zip upload
-*/
+/* zipObject: the JSZip ZipObject from the slack zip upload */
 function processZip(zipObject) {
   zipContent = zipObject; // set global var
   var channelsTxt = null;
@@ -14,21 +16,81 @@ function processZip(zipObject) {
       processChannels(JSON.parse(content));
     }
   );
+  zipContent.files["users.json"].async('text').then(
+    function success(content) {
+      processUsers(JSON.parse(content));
+    }
+  );
+  fireWhenChannelsReady();
 }
 
-/*
-  channelJSON: JSON Object of `channels.json` from the Slack Zip
-*/
-function processChannels(channelJSON) {
-  var channelHeaders = ['Name','Archived','Purpose'];
-  var channelData = [];
-  channelJSON.forEach(function(channel) {
-    channelData.push([
-      channel.name,
-      channel.is_archived,
-      channel.purpose.value
-    ]);
+function fireWhenChannelsReady() {
+  if(!jQuery.isEmptyObject(channelData)) {
+    buildChannelChat();
+    fireWhenAllReady();
+  } else  {
+    setTimeout(fireWhenChannelsReady,500);
+  }
+}
+
+function fireWhenAllReady() {
+  var chatReady = true;
+  // Fraught with error due to async nature - could only be half loaded
+  channelIds.forEach(function(id) {
+    if(channelData[id]["messages"].length == 0) {
+      chatReady = false;
+    }
   });
+  if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
+    && chatReady) {
+    displayChannels();
+  } else {
+    setTimeout(fireWhenAllReady,500);
+  }
+}
+
+/* channelJSON: JSON Object of `channels.json` from the Slack Zip */
+function processChannels(channelJSON) {
+  channelJSON.forEach(function(channel) {
+    channelData[channel.id] = {
+      "name": channel.name,
+      "is_archived": channel.is_archived,
+      "purpose": channel.purpose.value,
+      "messages": []
+    };
+    channelIds.push(channel.id);
+  });
+}
+
+/* userJSON: JSON Object of `users.json` from the Slack Zip */
+function processUsers(userJSON) {
+  userJSON.forEach(function(user) {
+    userData[user.id] = {
+      "name": user.name,
+      "color": user.color,
+      "real_name": user.real_name,
+      "avatar": user.profile.image_24
+    }
+  });
+}
+
+function buildChannelChat() {
+  channelIds.forEach(function(id) {
+    zipContent.folder(channelData[id]["name"]).forEach(
+      function (relativePath, file) {
+        file.async('text').then(
+          function success(content) {
+            channelData[id]["messages"] =
+              channelData[id]["messages"].concat(JSON.parse(content));
+          }
+        );
+      }
+    );
+  });
+}
+
+function displayChannels() {
+  var channelHeaders = ['Name','Archived','Purpose'];
   var table = $('<table></table>').addClass('table table-striped');
   var tr = $('<tr></tr>');
   var th = $('<th></th>');
@@ -41,22 +103,22 @@ function processChannels(channelJSON) {
   table.append($('<thead></thead>').append(header));
   var tbody = $('<tbody></tbody>');
   //fill out the table body
-  channelData.forEach(function(d) {
+  channelIds.forEach(function(id) {
     var row = tr.clone();
-    d.forEach(function(e, j) {
-      row.append(td.clone().text(e));
-    });
+    row.append(td.clone().text(channelData[id]["name"])); // name
+    row.append(td.clone().text(channelData[id]["is_archived"])); // is_archived
+    row.append(td.clone().text(channelData[id]["purpose"])); // purpose
     tbody.append(row);
   });
   table.append(tbody);
-  $("#welcome").hide();
+  table.DataTable({
+    paging: false,
+    "order": [[ 1, 'asc' ],[ 0, 'asc' ]]
+  });
   $("#zip-output").append(table);
+  $("#welcome").hide();
 }
 
-/*
-  Adds onchange watcher to file input form, loads the zip, and kicks off
-  processing the zip
-*/
 (function(obj) {
   (function() {
     var fileInput = document.getElementById("file-input");

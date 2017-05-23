@@ -1,5 +1,5 @@
 # Slack Export Prettify
-A super simple SPA that takes Slack Exports (zip) and displays them in a human readable format in the browser.
+A super simple client-side only SPA that takes Slack Exports (zip) and displays them in a human readable format in the browser.
 
 # Stack
 Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes the following tools/libraries:
@@ -10,3 +10,8 @@ Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes th
 - Modernizr v2.8.3
 - Jquery v1.11.2
 - JSZip v3.1.3
+- Datatables v1.10.15
+
+# Running Locally
+
+Choose your favorite web server and point it at this directory, or open `index.html` with your favorite browser. Completely client side!
