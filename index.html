@@ -26,7 +26,6 @@
       </div>
     </div>
   </nav>
-
   <div class="jumbotron" id="welcome">
     <div class="container">
       <p>
@@ -56,19 +55,23 @@
       </form>
     </div>
   </div>
-
-  <div class="container">
-    <!-- Example row of columns -->
-    <div class="row">
-      <div class="col-md-12" id="zip-output">
-        <!-- content will go here -->
+  <div class="container-fluid">
+    <div class="row" id="progress">
+      <div class="progress">
+        <div id="progressbar" class="progress-bar" role="progressbar"
+          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+          style="width: 0%;">
+          0%
+        </div>
       </div>
+    </div>
+    <div class="row hideme" id="zip-output">
+      <!-- content will go here -->
     </div>
     <footer>
       <!-- TODO -->
     </footer>
   </div>
-  <!-- /container -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script>
     window.jQuery || document.write('<script src="js/vendor/jquery-1.11.2.min.js"><\/script>')
@@ -76,9 +79,5 @@
   <script src="js/vendor/bootstrap.min.js"></script>
   <script type="text/javascript" src="js/vendor/jszip.min.js"></script>
   <script src="js/main.js"></script>
-  <link rel="stylesheet" type="text/css"
-    href="//cdn.datatables.net/1.10.15/css/jquery.dataTables.css">
-  <script type="text/javascript" charset="utf8"
-    src="//cdn.datatables.net/1.10.15/js/jquery.dataTables.js"></script>
 </body>
 </html>
