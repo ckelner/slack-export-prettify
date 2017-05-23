@@ -7,6 +7,7 @@ var channelIds = [];
 var userData = {};
 var chatDataComplete = false;
 var progressPerct = 0;
+var currentChannelDisplayedId = null;
 
 /* zipObject: the JSZip ZipObject from the slack zip upload */
 function processZip(zipObject) {
@@ -69,7 +70,7 @@ function fireWhenHTMLReady() {
 
 /* channelJSON: JSON Object of `channels.json` from the Slack Zip */
 function processChannels(channelJSON) {
-  updateProgressPercentage(3);
+  updateProgressPercentage(1);
   channelJSON.forEach(function(channel) {
     channelData[channel.id] = {
       "name": channel.name,
@@ -79,7 +80,7 @@ function processChannels(channelJSON) {
       "html": null
     };
     channelIds.push({"name": channel.name, "id": channel.id});
-    updateProgressPercentage(1);
+    updateProgressPercentage(0.25);
   });
   channelIds.sort(function (a, b) {
     var nameA = a.name.toUpperCase();
@@ -105,7 +106,7 @@ function processUsers(userJSON) {
       "avatar": user.profile.image_24
     }
   });
-  updateProgressPercentage(2);
+  updateProgressPercentage(1);
 }
 
 function getChannelChat() {
@@ -120,7 +121,7 @@ function getChannelChat() {
         );
       }
     );
-    updateProgressPercentage(0.5);
+    updateProgressPercentage(0.25);
   });
 }
 
@@ -129,10 +130,21 @@ function buildChannelChat() {
     var worker = new Worker('js/buildChat.js');
     worker.addEventListener('message', function(e) {
       channelData[e.data.channelId]["html"] = e.data.html;
+      this.postMessage({"cmd": "stop"});
     }, false);
-    worker.postMessage({"channel": channelIds[x], "channelData": channelData[channelIds[x].id], "userData": userData});
-    updateProgressPercentage(1);
+    worker.postMessage({"channel": channelIds[x], "channelData":
+      channelData[channelIds[x].id], "userData": userData, "cmd": "process"});
+    updateProgressPercentage(0.5);
   }
+}
+
+function putDatHTMLOnDaDomBomb() {
+  // take the html we got for each channel and put it on the dom
+  // so it can load quickly, cuz this shit full of hacks
+  channelIds.forEach(function(idObj) {
+    $("#zip-output").append(channelData[idObj.id]["html"]);
+    updateProgressPercentage(1);
+  });
 }
 
 function displayChat() {
@@ -150,13 +162,17 @@ function displayChat() {
     updateProgressPercentage(0.25);
   });
   channelNav.append(bsListGrpChan);
-  hideProgress();
   $("#zip-output").append(channelNav);
+  putDatHTMLOnDaDomBomb();
+  hideProgress();
+  showChat();
   $("#"+channelIds[0].id).trigger('click');
 }
 
 function displayChannelChat(link, channelId) {
-  $("#zip-output").append(channelData[channelId]["html"]);
+  $("#chat-" + channelId).removeClass("hideme");
+  $("#chat-" + currentChannelDisplayedId).addClass("hideme");
+  currentChannelDisplayedId = channelId;
   $(".list-group-item").removeClass("active");
   $(link).addClass("active");
 }
@@ -167,6 +183,10 @@ function showProgress() {
 
 function hideProgress() {
   $("#progress").hide();
+}
+
+function showChat() {
+  $("#zip-output").removeClass("hideme");
 }
 
 function updateProgressPercentage(value) {
@@ -189,10 +209,10 @@ function hideWelcome() {
       showProgress();
       hideWelcome();
       JSZip.loadAsync(fileInput.files[0]).then(function(promise) {
-        updateProgressPercentage(3);
+        updateProgressPercentage(1.5);
         return promise;
       }).then(function onFulfill(content) {
-        updateProgressPercentage(3);
+        updateProgressPercentage(1.5);
         processZip(content);
       });
     }, false);

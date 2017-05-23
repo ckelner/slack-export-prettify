@@ -33,3 +33,7 @@ footer {
   color: darkgrey;
   padding-left: 10px;
 }
+
+.hideme {
+  display: none;
+}
