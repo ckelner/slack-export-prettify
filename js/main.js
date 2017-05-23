@@ -49,8 +49,12 @@ function processChannels(channelJSON) {
     tbody.append(row);
   });
   table.append(tbody);
-  $("#welcome").hide();
+  table.DataTable({
+    paging: false,
+    "order": [[ 1, 'asc' ],[ 0, 'asc' ]]
+  });
   $("#zip-output").append(table);
+  $("#welcome").hide();
 }
 
 /*
