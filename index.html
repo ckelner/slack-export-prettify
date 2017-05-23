@@ -22,29 +22,11 @@
   <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container">
       <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
         <a class="navbar-brand" href="#">Slack Export Prettify</a>
       </div>
-      <div id="navbar" class="navbar-collapse collapse">
-        <form class="navbar-form navbar-right" role="form">
-          <div class="form-group">
-            <input type="text" placeholder="Slack Export Zip"
-              class="form-control">
-          </div>
-          <button type="button" class="btn btn-default">Select</button>
-          <button type="submit" class="btn btn-success">Upload</button>
-        </form>
-      </div>
-      <!--/.navbar-collapse -->
     </div>
   </nav>
 
-  <!-- Main jumbotron for a primary marketing message or call to action -->
   <div class="jumbotron">
     <div class="container">
       <p>
@@ -59,26 +41,26 @@
           (channels) and json files broken into dates.
         </li>
         <li>
-          Select your zip using the form in the header of this app using the
-          "Select" button.
+          Select your zip using the "Choose File" button in the form below.
         </li>
         <li>
-          Upload your zip using the "Upload" button.
-        </li>
-        <li>
-          A processing indicator should appear below and once complete these
+          The app will process your zip and once it is complete these
           instructions will be replaced by a list of your channels that you can
           click on. Within each of those will be the concatenated chat history
           from each day that was available in the export.
         </li>
       </ol>
+      <form role="form" id="file-select-form">
+        <input type="file" accept="application/zip" id="file-input"
+          placeholder="Select slack export zip file" class="form-control">
+      </form>
     </div>
   </div>
 
   <div class="container">
     <!-- Example row of columns -->
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-md-12" id="zip-output">
         <!-- content will go here -->
       </div>
     </div>
@@ -92,6 +74,7 @@
     window.jQuery || document.write('<script src="js/vendor/jquery-1.11.2.min.js"><\/script>')
   </script>
   <script src="js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/js/vendor/jszip.min.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

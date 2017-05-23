@@ -9,3 +9,4 @@ Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes th
 - Normalize v3.0.3
 - Modernizr v2.8.3
 - Jquery v1.11.2
+- JSZip v3.1.3
