@@ -10,3 +10,11 @@ footer {
 #file-select-form {
   width: 500px;
 }
+
+#zip-output {
+  padding-top: 20px;
+}
+
+#progress {
+  padding-top: 20px;
+}

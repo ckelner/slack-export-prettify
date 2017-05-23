@@ -6,6 +6,7 @@ var channelData = {};
 var channelIds = [];
 var userData = {};
 var chatDataComplete = false;
+var progressPerct = 0;
 
 /* zipObject: the JSZip ZipObject from the slack zip upload */
 function processZip(zipObject) {
@@ -26,7 +27,7 @@ function processZip(zipObject) {
 
 function fireWhenChannelsReady() {
   if(!jQuery.isEmptyObject(channelData)) {
-    buildChannelChat();
+    getChannelChat();
     fireWhenAllReady();
   } else  {
     setTimeout(fireWhenChannelsReady,500);
@@ -36,14 +37,15 @@ function fireWhenChannelsReady() {
 function fireWhenAllReady() {
   var chatReady = true;
   // Fraught with error due to async nature - could only be half loaded
-  channelIds.forEach(function(id) {
-    if(channelData[id]["messages"].length == 0) {
+  channelIds.forEach(function(idObj) {
+    if(channelData[idObj.id]["messages"].length == 0) {
       chatReady = false;
     }
   });
   if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
     && chatReady) {
-    displayChannels();
+    //buildChannelChat();
+    displayChat();
   } else {
     setTimeout(fireWhenAllReady,500);
   }
@@ -51,6 +53,7 @@ function fireWhenAllReady() {
 
 /* channelJSON: JSON Object of `channels.json` from the Slack Zip */
 function processChannels(channelJSON) {
+  updateProgressPercentage(3);
   channelJSON.forEach(function(channel) {
     channelData[channel.id] = {
       "name": channel.name,
@@ -58,7 +61,20 @@ function processChannels(channelJSON) {
       "purpose": channel.purpose.value,
       "messages": []
     };
-    channelIds.push(channel.id);
+    channelIds.push({"name": channel.name, "id": channel.id});
+    updateProgressPercentage(1);
+  });
+  channelIds.sort(function (a, b) {
+    var nameA = a.name.toUpperCase();
+    var nameB = b.name.toUpperCase();
+    if (nameA < nameB) {
+      return -1;
+    }
+    if (nameA > nameB) {
+      return 1;
+    }
+    // equal
+    return 0;
   });
 }
 
@@ -72,38 +88,58 @@ function processUsers(userJSON) {
       "avatar": user.profile.image_24
     }
   });
+  updateProgressPercentage(3);
 }
 
-function buildChannelChat() {
-  channelIds.forEach(function(id) {
-    zipContent.folder(channelData[id]["name"]).forEach(
+function getChannelChat() {
+  channelIds.forEach(function(idObj) {
+    zipContent.folder(channelData[idObj.id]["name"]).forEach(
       function (relativePath, file) {
         file.async('text').then(
           function success(content) {
-            channelData[id]["messages"] =
-              channelData[id]["messages"].concat(JSON.parse(content));
+            channelData[idObj.id]["messages"] =
+              channelData[idObj.id]["messages"].concat(JSON.parse(content));
           }
         );
       }
     );
+    updateProgressPercentage(1);
   });
 }
 
-function displayChannels() {
-  var channelHeaders = ['Name','Archived','Purpose'];
-  var table = $('<table></table>').addClass('table table-striped');
-  var tr = $('<tr></tr>');
-  var th = $('<th></th>');
-  var td = $('<td></td>');
-  var header = tr.clone();
-  //fill header row
-  channelHeaders.forEach(function(d) {
-    header.append(th.clone().text(d));
+function buildChannelChat() {
+  // TODO
+  channelIds.forEach(function(idObj) {
+    channelData[idObj.id]["messages"]
+    updateProgressPercentage(2);
   });
-  table.append($('<thead></thead>').append(header));
+}
+
+function displayChat() {
+  var div = $('<div></div>');
+  var anchor = $('<a></a>')
+  var table = $('<table></table>');//.addClass('table table-striped');
+  var tr = $('<tr></tr>');
+  var td = $('<td></td>');
   var tbody = $('<tbody></tbody>');
+  // left nav for channels
+  var channelNav = div.clone().addClass("col-lg-2 col-md-2 col-sm-3 col-xs-4");
+  var bsListGrpChan = div.clone().addClass("list-group");
+  channelIds.forEach(function(idObj) {
+    var channelLink = anchor.clone().addClass("list-group-item")
+      .text(channelData[idObj.id]["name"]);
+    channelLink.click(function() {
+      displayChannelChat(idObj.id);
+      $(".list-group-item").removeClass("active");
+      $(this).addClass("active");
+    });
+    bsListGrpChan.append(channelLink);
+    updateProgressPercentage(0.25);
+  });
+  channelNav.append(bsListGrpChan);
+
   //fill out the table body
-  channelIds.forEach(function(id) {
+  /*channelIds.forEach(function(id) {
     var row = tr.clone();
     row.append(td.clone().text(channelData[id]["name"])); // name
     row.append(td.clone().text(channelData[id]["is_archived"])); // is_archived
@@ -114,8 +150,33 @@ function displayChannels() {
   table.DataTable({
     paging: false,
     "order": [[ 1, 'asc' ],[ 0, 'asc' ]]
-  });
-  $("#zip-output").append(table);
+  });*/
+  hideProgress();
+  $("#zip-output").append(channelNav);
+}
+
+function displayChannelChat(channelId) {
+  //TODO
+  alert("HEY " + channelId);
+}
+
+function showProgress() {
+  $("#progress").show();
+}
+
+function hideProgress() {
+  $("#progress").hide();
+}
+
+function updateProgressPercentage(value) {
+  progressPerct += value;
+  pbar = $("#progressbar");
+  pbar.attr("aria-valuenow",progressPerct);
+  pbar.css("width",progressPerct + "%");
+  pbar.text(progressPerct + "%")
+}
+
+function hideWelcome() {
   $("#welcome").hide();
 }
 
@@ -123,9 +184,13 @@ function displayChannels() {
   (function() {
     var fileInput = document.getElementById("file-input");
     fileInput.addEventListener('change', function() {
+      showProgress();
+      hideWelcome();
       JSZip.loadAsync(fileInput.files[0]).then(function(promise) {
+        updateProgressPercentage(3);
         return promise;
       }).then(function onFulfill(content) {
+        updateProgressPercentage(3);
         processZip(content);
       });
     }, false);
