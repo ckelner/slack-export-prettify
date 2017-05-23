@@ -28,26 +28,42 @@ function processZip(zipObject) {
 function fireWhenChannelsReady() {
   if(!jQuery.isEmptyObject(channelData)) {
     getChannelChat();
-    fireWhenAllReady();
+    fireWhenMessagesReady();
   } else  {
     setTimeout(fireWhenChannelsReady,500);
   }
 }
 
-function fireWhenAllReady() {
+function fireWhenMessagesReady() {
   var chatReady = true;
   // Fraught with error due to async nature - could only be half loaded
   channelIds.forEach(function(idObj) {
-    if(channelData[idObj.id]["messages"].length == 0) {
+    if(channelData[idObj.id]["messages"].length <= 0) {
       chatReady = false;
     }
   });
   if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
     && chatReady) {
     buildChannelChat();
+    fireWhenHTMLReady();
+  } else {
+    setTimeout(fireWhenMessagesReady,500);
+  }
+}
+
+function fireWhenHTMLReady() {
+  var htmlRdy = true;
+  // Fraught with error due to async nature - could only be half loaded
+  channelIds.forEach(function(idObj) {
+    if(channelData[idObj.id]["html"] == null) {
+      htmlRdy = false;
+    }
+  });
+  if(htmlRdy) {
     displayChat();
   } else {
-    setTimeout(fireWhenAllReady,500);
+    setTimeout(fireWhenHTMLReady,500);
+    updateProgressPercentage(1);
   }
 }
 
@@ -59,7 +75,8 @@ function processChannels(channelJSON) {
       "name": channel.name,
       "is_archived": channel.is_archived,
       "purpose": channel.purpose.value,
-      "messages": []
+      "messages": [],
+      "html": null
     };
     channelIds.push({"name": channel.name, "id": channel.id});
     updateProgressPercentage(1);
@@ -108,43 +125,14 @@ function getChannelChat() {
 }
 
 function buildChannelChat() {
-  channelIds.forEach(function(idObj) {
-    var div = $('<div></div>');
-    var channelChat = div.clone().addClass("col-lg-10 col-md-10 col-sm-9 col-xs-6");
-    var header = div.clone().addClass("table-responsive");
-    header.html(
-      "<table class='table'><tr><td class='channelheadertd'>" +
-      "<h2 class='channelheader'>" +
-        idObj.name +
-      "</h2></td>" +
-      "<td class='channelheadertd'><h4 class='channelpurpose'>" +
-        channelData[idObj.id]["purpose"] +
-      "</h4></td><td class='channelheadertd'><b class='channelarchived'>" +
-        "[Archived: " + channelData[idObj.id]["is_archived"] +
-      "]</b></td></tr></table>"
-    );
-    channelChat.append(header);
-    /*var tableWrapper = div.clone().addClass("table-responsive");
-    channelData[idObj.id]["messages"].forEach(function(msg) {
-      var table = $('<table></table>');//.addClass('table table-striped');
-      var tr = $('<tr></tr>');
-      var td = $('<td></td>');
-      var tbody = $('<tbody></tbody>');
-
-      var row = tr.clone();
-      row.append(td.clone().text(channelData[id]["name"])); // name
-      row.append(td.clone().text(channelData[id]["is_archived"])); // is_archived
-      row.append(td.clone().text(channelData[id]["purpose"])); // purpose
-      tbody.append(row);
-      table.append(tbody);
-      table.DataTable({
-        paging: false,
-        "order": [[ 1, 'asc' ],[ 0, 'asc' ]]
-      });
-    });*/
-    updateProgressPercentage(2);
-    channelData[idObj.id]["html"] = channelChat;
-  });
+  for(var x=0, lenx=channelIds.length; x<lenx; x++) {
+    var worker = new Worker('js/buildChat.js');
+    worker.addEventListener('message', function(e) {
+      channelData[e.data.channelId]["html"] = e.data.html;
+    }, false);
+    worker.postMessage({"channel": channelIds[x], "channelData": channelData[channelIds[x].id], "userData": userData});
+    updateProgressPercentage(1);
+  }
 }
 
 function displayChat() {
@@ -187,6 +175,7 @@ function updateProgressPercentage(value) {
   pbar.attr("aria-valuenow",progressPerct);
   pbar.css("width",progressPerct + "%");
   pbar.text(progressPerct + "%")
+  console.log("Percent done: " + progressPerct);
 }
 
 function hideWelcome() {
