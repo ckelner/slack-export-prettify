@@ -4,6 +4,8 @@ A super simple SPA that takes Slack Exports (zip) and displays them in a human r
 # Stack
 Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes the following tools/libraries:
 
-- Bootstrap v3.3.1
+- Bootswatch v3.3.7
+- Bootstrap v3.3.7
+- Normalize v3.0.3
 - Modernizr v2.8.3
 - Jquery v1.11.2
