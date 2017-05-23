@@ -5,10 +5,9 @@ var zipContent = null;
 var channelData = {};
 var channelIds = [];
 var userData = {};
+var chatDataComplete = false;
 
-/*
-  zipObject: the JSZip ZipObject from the slack zip upload
-*/
+/* zipObject: the JSZip ZipObject from the slack zip upload */
 function processZip(zipObject) {
   zipContent = zipObject; // set global var
   var channelsTxt = null;
@@ -22,43 +21,72 @@ function processZip(zipObject) {
       processUsers(JSON.parse(content));
     }
   );
-  //buildChannelChat();
-  displayData();
+  fireWhenChannelsReady();
 }
 
-function displayData() {
-  if(!jQuery.isEmptyObject(channelData)) { // && jQuery.isEmptyObject(userData)
-    displayChannels();
-  } else {
-    setTimeout(displayData,500);
+function fireWhenChannelsReady() {
+  if(!jQuery.isEmptyObject(channelData)) {
+    buildChannelChat();
+    fireWhenAllReady();
+  } else  {
+    setTimeout(fireWhenChannelsReady,500);
   }
 }
 
-/*
-  channelJSON: JSON Object of `channels.json` from the Slack Zip
-*/
+function fireWhenAllReady() {
+  var chatReady = true;
+  // Fraught with error due to async nature - could only be half loaded
+  channelIds.forEach(function(id) {
+    if(channelData[id]["messages"].length == 0) {
+      chatReady = false;
+    }
+  });
+  if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
+    && chatReady) {
+    displayChannels();
+  } else {
+    setTimeout(fireWhenAllReady,500);
+  }
+}
+
+/* channelJSON: JSON Object of `channels.json` from the Slack Zip */
 function processChannels(channelJSON) {
   channelJSON.forEach(function(channel) {
     channelData[channel.id] = {
       "name": channel.name,
       "is_archived": channel.is_archived,
-      "purpose": channel.purpose.value
+      "purpose": channel.purpose.value,
+      "messages": []
     };
     channelIds.push(channel.id);
   });
 }
 
-/*
-  userJSON: JSON Object of `users.json` from the Slack Zip
-*/
+/* userJSON: JSON Object of `users.json` from the Slack Zip */
 function processUsers(userJSON) {
-  userJSON.forEach(function(channel) {
-
+  userJSON.forEach(function(user) {
+    userData[user.id] = {
+      "name": user.name,
+      "color": user.color,
+      "real_name": user.real_name,
+      "avatar": user.profile.image_24
+    }
   });
 }
 
 function buildChannelChat() {
-  // TODO
+  channelIds.forEach(function(id) {
+    zipContent.folder(channelData[id]["name"]).forEach(
+      function (relativePath, file) {
+        file.async('text').then(
+          function success(content) {
+            channelData[id]["messages"] =
+              channelData[id]["messages"].concat(JSON.parse(content));
+          }
+        );
+      }
+    );
+  });
 }
 
 function displayChannels() {
@@ -91,10 +119,6 @@ function displayChannels() {
   $("#welcome").hide();
 }
 
-/*
-  Adds onchange watcher to file input form, loads the zip, and kicks off
-  processing the zip
-*/
 (function(obj) {
   (function() {
     var fileInput = document.getElementById("file-input");
