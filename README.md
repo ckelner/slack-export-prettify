@@ -7,6 +7,12 @@ A super simple proof of concept client-side only SPA that takes Slack Exports
 Just visit https://ckelner.github.io/slack-export-prettify/ and follow the
 instructions.
 
+# Why?
+
+Some friends in one of my Slack team's wanted to preserve the history of our
+channels but also have a human friendly way to view them at a future date,
+thus was born this project.
+
 # Stack
 Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes
 the following tools/libraries:
