@@ -27,17 +27,19 @@ onmessage = function(e) {
       // loop over all messages
       for(var i=0, len=channelData["messages"].length; i<len; i++) {
         var msg = channelData["messages"][i];
-        // x1000 to convert from epoch to UTC Seconds that JS Date understands
-        var d = new Date(msg.ts * 1000);
-        var avatar = null;
-        var name = null;
-        if(userData[msg.user] != undefined) {
-          avatar = userData[msg.user].avatar;
-          name = userData[msg.user].name;
+        if(msg.text != undefined) {
+          // x1000 to convert from epoch to UTC Seconds that JS Date understands
+          var d = new Date(msg.ts * 1000);
+          var avatar = null;
+          var name = null;
+          if(userData[msg.user] != undefined) {
+            avatar = userData[msg.user].avatar;
+            name = userData[msg.user].name;
+          }
+          var massagedMsg = massageMsg(msg.text, userData);
+          channelChat += buildChannelMsg(avatar, massagedMsg, name,
+            d.toUTCString());
         }
-        var massagedMsg = massageMsg(msg.text, userData);
-        channelChat += buildChannelMsg(avatar, massagedMsg, name,
-          d.toUTCString());
       }
       channelChat += closeElement("table") + closeElement("div");
       self.postMessage({"html": channelChat, "channelId": channel.id});
