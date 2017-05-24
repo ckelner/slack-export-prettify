@@ -137,7 +137,7 @@ function buildChannelMsg(avatar, msg, username, date) {
     username = "&nbsp;";
   }
   return buildElement("tr", null, null) +
-    buildElement("td", null, null) +
+    buildElement("td", null, "avatar") +
       avatar +
     closeElement("td") +
     buildElement("td", null, null) +
