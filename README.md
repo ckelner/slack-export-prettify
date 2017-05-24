@@ -1,12 +1,15 @@
 # Slack Export Prettify
-A super simple proof of concept client-side only SPA that takes Slack Exports (zip) and displays them in a human readable format in the browser
+A super simple proof of concept client-side only SPA that takes Slack Exports
+(zip) and displays them in a human readable format in the browser
 
 # How to use it?
 
-Just visit https://ckelner.github.io/slack-export-prettify/ and follow the instructions.
+Just visit https://ckelner.github.io/slack-export-prettify/ and follow the
+instructions.
 
 # Stack
-Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes the following tools/libraries:
+Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes
+the following tools/libraries:
 
 - Bootswatch v3.3.7
 - Bootstrap v3.3.7
@@ -17,4 +20,5 @@ Browser only single page app. Hosted on GitHub pages for simplicity. Utilizes th
 
 # Running Locally
 
-Choose your favorite web server and point it at this directory, or open `index.html` with your favorite browser. Completely client side!
+Choose your favorite web server and point it at this directory, or open
+`index.html` with your favorite browser. Completely client side!
