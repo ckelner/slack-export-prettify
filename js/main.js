@@ -224,11 +224,13 @@ messages that were being displayed, shows the channel messages for the clicked
 on channel and changes which channel is marked active in the nav.
 */
 function displayChannelChat(link, channelId) {
-  $("#chat-" + channelId).removeClass("hideme");
-  $("#chat-" + currentChannelDisplayedId).addClass("hideme");
-  currentChannelDisplayedId = channelId;
-  $(".list-group-item").removeClass("active");
-  $(link).addClass("active");
+  if(channelId != currentChannelDisplayedId) { // user clicked on same channel
+    $("#chat-" + channelId).removeClass("hideme");
+    $("#chat-" + currentChannelDisplayedId).addClass("hideme");
+    currentChannelDisplayedId = channelId;
+    $(".list-group-item").removeClass("active");
+    $(link).addClass("active");
+  }
 }
 
 /* Utility functions for revealing and hiding elements */
