@@ -11,7 +11,11 @@ var currentChannelDisplayedId = null;
 var channelFilesTotal = 0;
 var channelFilesProcessed = 0;
 
-/* zipObject: the JSZip ZipObject from the slack zip upload */
+/*
+Opens the channel and user json objects from the zip and builds objects and
+arrays from them for processing. Expects on arguement:
+zipObject: the JSZip ZipObject from the slack zip upload
+*/
 function processZip(zipObject) {
   zipContent = zipObject; // set global var
   var channelsTxt = null;
@@ -28,6 +32,7 @@ function processZip(zipObject) {
   fireWhenChannelsReady();
 }
 
+/* waits until channel data is available before proceeding */
 function fireWhenChannelsReady() {
   if(!jQuery.isEmptyObject(channelData)) {
     countFilesInChannels();
@@ -38,6 +43,7 @@ function fireWhenChannelsReady() {
   }
 }
 
+/* waits until message data is available before proceeding */
 function fireWhenMessagesReady() {
   if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
     && channelFilesProcessed == channelFilesTotal) {
@@ -67,6 +73,9 @@ function fireWhenHTMLReady() {
   }
 }
 
+/*
+Gets the total number of files across all channels - used to determine if all channel message data has been asynchronously processed or not
+*/
 function countFilesInChannels() {
   Object.keys(zipContent.files).forEach(function(key,index) {
       if(key.indexOf("/") != -1 && key.indexOf(".json") != -1) {
@@ -76,7 +85,11 @@ function countFilesInChannels() {
   );
 }
 
-/* channelJSON: JSON Object of `channels.json` from the Slack Zip */
+/*
+Builds an object for each channel from the channel json in the zip then
+orders these alphabetically. Expects one arguement:
+channelJSON: JSON Object of `channels.json` from the Slack Zip
+*/
 function processChannels(channelJSON) {
   channelJSON.forEach(function(channel) {
     channelData[channel.id] = {
@@ -102,7 +115,10 @@ function processChannels(channelJSON) {
   });
 }
 
-/* userJSON: JSON Object of `users.json` from the Slack Zip */
+/*
+Builds an object for each user from the userjson in the zip. Expects one argument:
+userJSON: JSON Object of `users.json` from the Slack Zip
+*/
 function processUsers(userJSON) {
   userJSON.forEach(function(user) {
     userData[user.id] = {
@@ -114,6 +130,14 @@ function processUsers(userJSON) {
   });
 }
 
+/*
+Gets all messages from all channels in all folders in the zip asynchronously.
+Because the zip contains a json for every day there were messages, this
+function much process each json individually and concatenate it to the previous
+one; however the "forEach" function on the JSZip Object does not guarentee these
+to be in order by date. These messages get sorted by date later by the buildChat
+web worker.
+*/
 function getChannelChat() {
   channelIds.forEach(function(idObj) {
     zipContent.folder(channelData[idObj.id]["name"]).forEach(
@@ -132,6 +156,10 @@ function getChannelChat() {
   });
 }
 
+/*
+For each channel it spawns a buildChat.js web worker to process all messages
+which build html strings to be displayed to the end user
+*/
 function buildChannelChat() {
   for(var x=0, lenx=channelIds.length; x<lenx; x++) {
     var worker = new Worker('js/buildChat.js');
@@ -144,6 +172,10 @@ function buildChannelChat() {
   }
 }
 
+/*
+Adds the html strings for each channels messages to the DOM for quicker loading.
+Still fairly non-performant when messages total in the thousands.
+*/
 function putDatHTMLOnDaDomBomb() {
   // take the html we got for each channel and put it on the dom
   // so it can load quickly, cuz this shit full of hacks
@@ -152,6 +184,11 @@ function putDatHTMLOnDaDomBomb() {
   });
 }
 
+/*
+Utility function to call functions which append the channel navigation and
+message html to the DOM. Triggers a click on the first channel in the
+navigation. Calls function which hide the welcome instructions and loading divs.
+*/
 function displayChat() {
   $("#zip-output").append(buildNav());
   putDatHTMLOnDaDomBomb();
@@ -161,6 +198,7 @@ function displayChat() {
   hideWelcome();
 }
 
+/* Builds the channel navigation */
 function buildNav() {
   var div = $('<div></div>');
   var anchor = $('<a></a>')
@@ -178,6 +216,9 @@ function buildNav() {
   return channelNav;
 }
 
+/*
+The onclick function for each channel in the nav; hides the div for the channel messages that were being displayed, shows the channel messages for the clicked on channel and changes which channel is marked active in the nav.
+*/
 function displayChannelChat(link, channelId) {
   $("#chat-" + channelId).removeClass("hideme");
   $("#chat-" + currentChannelDisplayedId).addClass("hideme");
@@ -186,22 +227,24 @@ function displayChannelChat(link, channelId) {
   $(link).addClass("active");
 }
 
+/* Utility functions for revealing and hiding elements */
 function showLoading() {
   $("#loading").show();
 }
-
 function hideLoading() {
   $("#loading").hide();
 }
-
 function showChat() {
   $("#zip-output").removeClass("hideme");
 }
-
 function hideWelcome() {
   $("#welcome").hide();
 }
 
+/*
+OnLoad function that creates a listener for file input selection which kicks
+off processing.
+*/
 (function(obj) {
   (function() {
     var fileInput = document.getElementById("file-input");
