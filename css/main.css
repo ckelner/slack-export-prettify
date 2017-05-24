@@ -41,3 +41,8 @@ footer {
 #loading {
   display: none;
 }
+
+.avatar {
+  max-width: 70px;
+  width: 66px;
+}
