@@ -1,5 +1,6 @@
 /*
   Evil global vars
+  TODO: Put into a "namespace"
 */
 var zipContent = null;
 var channelData = {};
