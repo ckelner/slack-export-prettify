@@ -4,6 +4,7 @@ jQuery ($) is not available to web workers (nor is the dom) - so we resort to
 "building" HTML as strings that get returned on the message object to the main
 thread.
 */
+/* Builds and returns an html string for all messages for a given channel */
 onmessage = function(e) {
   // check what the worker should do, only two commands, process and stop/kill
   switch (e.data.cmd) {
@@ -28,13 +29,13 @@ onmessage = function(e) {
         var msg = channelData["messages"][i];
         // x1000 to convert from epoch to UTC Seconds that JS Date understands
         var d = new Date(msg.ts * 1000);
-        // might lose a few messages here; TODO: Fix
+        var avatar = null;
+        var name = null;
         if(userData[msg.user] != undefined) {
-          channelChat += buildChannelMsg(userData[msg.user].avatar, msg.text);
-        } else {
-          console.log("Userdata not found for: " + msg.user);
-          console.log("Message was: " + msg.text);
+          avatar = userData[msg.user].avatar;
+          name = userData[msg.user].name;
         }
+        channelChat += buildChannelMsg(avatar, msg.text, name, d.toUTCString());
       }
       channelChat += closeElement("table") + closeElement("div");
       self.postMessage({"html": channelChat, "channelId": channel.id});
@@ -45,6 +46,7 @@ onmessage = function(e) {
   }
 };
 
+/* Builds the channel header html */
 function buildChannelHeader(id, name, purpose, archived) {
   // Indention in style of HTML for easier reading
   // 2 spaces of indention for each nested element
@@ -75,14 +77,26 @@ function buildChannelHeader(id, name, purpose, archived) {
       buildElement("table", null, "table table-striped");
 }
 
-function buildChannelMsg(avatar, msg, username) {
+/* Builds the html for a single message entry */
+function buildChannelMsg(avatar, msg, username, date) {
+  if(avatar != null) {
+    avatar = "<img src='" + avatar + "'/>";
+  } else {
+    avatar = "&nbsp;";
+  }
+  if(username != null) {
+    username = "<b>" + username + "</b>";
+  } else {
+    username = "&nbsp;";
+  }
   return buildElement("tr", null, null) +
     buildElement("td", null, null) +
-      "<img src='" + avatar + "'/>" +
+      avatar +
     closeElement("td") +
     buildElement("td", null, null) +
       buildElement("div", null, null) +
-        "<i>" + d.toUTCString() + "</i>" +
+        username +
+        "<i>" + date + "</i>" +
       closeElement("div") +
       buildElement("div", null, null) +
         msg +
@@ -97,7 +111,6 @@ function buildElement(element, id, classes) {
   classes = buildAttribute("class", classes);
   return "<" + element + id + classes + ">"
 }
-
 function buildAttribute(attr, value) {
   if(value != null && value != '') {
     return " " + attr + "='" + value + "'";
@@ -105,11 +118,9 @@ function buildAttribute(attr, value) {
     return "";
   }
 }
-
 function closeElement(element) {
   return "</" + element + ">"
 }
-
 function orderMessagesByDate(messages) {
   messages.sort(function(a, b) {
     return a.ts - b.ts;
