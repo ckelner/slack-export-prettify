@@ -8,6 +8,8 @@ var userData = {};
 var chatDataComplete = false;
 var progressPerct = 0;
 var currentChannelDisplayedId = null;
+var channelFilesTotal = 0;
+var channelFilesProcessed = 0;
 
 /* zipObject: the JSZip ZipObject from the slack zip upload */
 function processZip(zipObject) {
@@ -28,6 +30,7 @@ function processZip(zipObject) {
 
 function fireWhenChannelsReady() {
   if(!jQuery.isEmptyObject(channelData)) {
+    countFilesInChannels();
     getChannelChat();
     fireWhenMessagesReady();
   } else  {
@@ -36,15 +39,8 @@ function fireWhenChannelsReady() {
 }
 
 function fireWhenMessagesReady() {
-  var chatReady = true;
-  // Fraught with error due to async nature - could only be half loaded
-  channelIds.forEach(function(idObj) {
-    if(channelData[idObj.id]["messages"].length <= 0) {
-      chatReady = false;
-    }
-  });
   if(!jQuery.isEmptyObject(channelData) && !jQuery.isEmptyObject(userData)
-    && chatReady) {
+    && channelFilesProcessed == channelFilesTotal) {
     buildChannelChat();
     fireWhenHTMLReady();
   } else {
@@ -66,6 +62,15 @@ function fireWhenHTMLReady() {
     setTimeout(fireWhenHTMLReady,500);
     updateProgressPercentage(1);
   }
+}
+
+function countFilesInChannels() {
+  Object.keys(zipContent.files).forEach(function(key,index) {
+      if(key.indexOf("/") != -1 && key.indexOf(".json") != -1) {
+        channelFilesTotal++;
+      }
+    }
+  );
 }
 
 /* channelJSON: JSON Object of `channels.json` from the Slack Zip */
@@ -117,6 +122,9 @@ function getChannelChat() {
           function success(content) {
             channelData[idObj.id]["messages"] =
               channelData[idObj.id]["messages"].concat(JSON.parse(content));
+            channelFilesProcessed++;
+          }, function error(e) {
+            console.log("Error getting text for: " + e);
           }
         );
       }
