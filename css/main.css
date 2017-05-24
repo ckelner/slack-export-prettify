@@ -37,3 +37,7 @@ footer {
 .hideme {
   display: none;
 }
+
+#loading {
+  display: none;
+}

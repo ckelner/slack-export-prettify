@@ -60,7 +60,6 @@ function fireWhenHTMLReady() {
     displayChat();
   } else {
     setTimeout(fireWhenHTMLReady,500);
-    updateProgressPercentage(1);
   }
 }
 
@@ -75,7 +74,6 @@ function countFilesInChannels() {
 
 /* channelJSON: JSON Object of `channels.json` from the Slack Zip */
 function processChannels(channelJSON) {
-  updateProgressPercentage(1);
   channelJSON.forEach(function(channel) {
     channelData[channel.id] = {
       "name": channel.name,
@@ -85,7 +83,6 @@ function processChannels(channelJSON) {
       "html": null
     };
     channelIds.push({"name": channel.name, "id": channel.id});
-    updateProgressPercentage(0.25);
   });
   channelIds.sort(function (a, b) {
     var nameA = a.name.toUpperCase();
@@ -111,7 +108,6 @@ function processUsers(userJSON) {
       "avatar": user.profile.image_24
     }
   });
-  updateProgressPercentage(1);
 }
 
 function getChannelChat() {
@@ -129,7 +125,6 @@ function getChannelChat() {
         );
       }
     );
-    updateProgressPercentage(0.25);
   });
 }
 
@@ -142,7 +137,6 @@ function buildChannelChat() {
     }, false);
     worker.postMessage({"channel": channelIds[x], "channelData":
       channelData[channelIds[x].id], "userData": userData, "cmd": "process"});
-    updateProgressPercentage(0.5);
   }
 }
 
@@ -151,11 +145,19 @@ function putDatHTMLOnDaDomBomb() {
   // so it can load quickly, cuz this shit full of hacks
   channelIds.forEach(function(idObj) {
     $("#zip-output").append(channelData[idObj.id]["html"]);
-    updateProgressPercentage(1);
   });
 }
 
 function displayChat() {
+  $("#zip-output").append(buildNav());
+  putDatHTMLOnDaDomBomb();
+  $("#"+channelIds[0].id).trigger('click');
+  showChat();
+  hideLoading();
+  hideWelcome();
+}
+
+function buildNav() {
   var div = $('<div></div>');
   var anchor = $('<a></a>')
   var channelNav = div.clone().addClass("col-lg-2 col-md-2 col-sm-3 col-xs-4");
@@ -167,14 +169,9 @@ function displayChat() {
       displayChannelChat(this, idObj.id);
     });
     bsListGrpChan.append(channelLink);
-    updateProgressPercentage(0.25);
   });
   channelNav.append(bsListGrpChan);
-  $("#zip-output").append(channelNav);
-  putDatHTMLOnDaDomBomb();
-  hideProgress();
-  showChat();
-  $("#"+channelIds[0].id).trigger('click');
+  return channelNav;
 }
 
 function displayChannelChat(link, channelId) {
@@ -185,25 +182,16 @@ function displayChannelChat(link, channelId) {
   $(link).addClass("active");
 }
 
-function showProgress() {
-  $("#progress").show();
+function showLoading() {
+  $("#loading").show();
 }
 
-function hideProgress() {
-  $("#progress").hide();
+function hideLoading() {
+  $("#loading").hide();
 }
 
 function showChat() {
   $("#zip-output").removeClass("hideme");
-}
-
-function updateProgressPercentage(value) {
-  progressPerct += value;
-  pbar = $("#progressbar");
-  pbar.attr("aria-valuenow",progressPerct);
-  pbar.css("width",progressPerct + "%");
-  pbar.text(progressPerct + "%")
-  console.log("Percent done: " + progressPerct);
 }
 
 function hideWelcome() {
@@ -214,13 +202,10 @@ function hideWelcome() {
   (function() {
     var fileInput = document.getElementById("file-input");
     fileInput.addEventListener('change', function() {
-      showProgress();
-      hideWelcome();
+      showLoading();
       JSZip.loadAsync(fileInput.files[0]).then(function(promise) {
-        updateProgressPercentage(1.5);
         return promise;
       }).then(function onFulfill(content) {
-        updateProgressPercentage(1.5);
         processZip(content);
       });
     }, false);

@@ -13,6 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/loader.css">
   <script src="js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
 </head>
 <body>
@@ -35,18 +36,19 @@
       <ol>
         <li>
           Download your Slack team's history. This can be done by navigating to
-          <kbd>https://$YOUR_TEAM_NAME.slack.com/services/export</kbd>. The export
-          will come in the form of a zip file containing many directories
+          <kbd>https://$YOUR_TEAM_NAME.slack.com/services/export</kbd>. The
+          export will come in the form of a zip file containing many directories
           (channels) and json files broken into dates.
         </li>
         <li>
           Select your zip using the "Choose File" button in the form below.
+          This will trigger the browser to load your zip file. The file does not
+          get uploaded anywhere, all processing is done client side.
         </li>
         <li>
           The app will process your zip and once it is complete these
           instructions will be replaced by a list of your channels that you can
-          click on. Within each of those will be the concatenated chat history
-          from each day that was available in the export.
+          click on and view the chat history that was contained in the zip.
         </li>
       </ol>
       <form role="form" id="file-select-form">
@@ -56,13 +58,15 @@
     </div>
   </div>
   <div class="container-fluid">
-    <div class="row" id="progress">
-      <div class="progress">
-        <div id="progressbar" class="progress-bar" role="progressbar"
-          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
-          style="width: 0%;">
-          0%
-        </div>
+    <div class="row" id="loading">
+      <center><p><h2>LOADING</h2></p></center>
+      <br/>
+      <div class="sk-folding-cube">
+        <div class="sk-cube1 sk-cube"></div>
+        <div class="sk-cube2 sk-cube"></div>
+        <div class="sk-cube4 sk-cube"></div>
+        <div class="sk-cube3 sk-cube"></div>
+      </div>
       </div>
     </div>
     <div class="row hideme" id="zip-output">
