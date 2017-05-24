@@ -1,6 +1,6 @@
 /*
-  Evil global vars
-  TODO: Put into a "namespace"
+Evil global vars
+TODO: Put into a "namespace"
 */
 var zipContent = null;
 var channelData = {};
@@ -117,7 +117,8 @@ function processChannels(channelJSON) {
 }
 
 /*
-Builds an object for each user from the userjson in the zip. Expects one argument:
+Builds an object for each user from the userjson in the zip.
+Expects one argument:
 userJSON: JSON Object of `users.json` from the Slack Zip
 */
 function processUsers(userJSON) {
@@ -126,7 +127,7 @@ function processUsers(userJSON) {
       "name": user.name,
       "color": user.color,
       "real_name": user.real_name,
-      "avatar": user.profile.image_24
+      "avatar": user.profile.image_48
     }
   });
 }
@@ -218,7 +219,9 @@ function buildNav() {
 }
 
 /*
-The onclick function for each channel in the nav; hides the div for the channel messages that were being displayed, shows the channel messages for the clicked on channel and changes which channel is marked active in the nav.
+The onclick function for each channel in the nav; hides the div for the channel
+messages that were being displayed, shows the channel messages for the clicked
+on channel and changes which channel is marked active in the nav.
 */
 function displayChannelChat(link, channelId) {
   $("#chat-" + channelId).removeClass("hideme");

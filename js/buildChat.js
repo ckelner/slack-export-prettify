@@ -35,7 +35,9 @@ onmessage = function(e) {
           avatar = userData[msg.user].avatar;
           name = userData[msg.user].name;
         }
-        channelChat += buildChannelMsg(avatar, msg.text, name, d.toUTCString());
+        var massagedMsg = massageMsg(msg.text, userData);
+        channelChat += buildChannelMsg(avatar, massagedMsg, name,
+          d.toUTCString());
       }
       channelChat += closeElement("table") + closeElement("div");
       self.postMessage({"html": channelChat, "channelId": channel.id});
@@ -45,6 +47,49 @@ onmessage = function(e) {
     break;
   }
 };
+
+/* parses messages and replaces useless IDs with usernames */
+function massageMsg(msg, userData) {
+  // example "<@U03PUGYQ3|kelner>" or "<@U03UYCN69>"
+  // This is a bit fraught with failure because users could have typed these
+  // substrings into messages, but 1 in 1,000 msgs isn't so bad
+  // TODO: come up with more foolproof method later
+  var newMsg = "";
+  var strStart = "<@";
+  var strEnd = ">";
+  var splitter = "|"
+  var exists = msg.indexOf(strStart);
+  if(exists != -1) {
+    var msgArr = msg.split(strStart);
+    for(var i=0, len=msgArr.length; i<len; i++) {
+      var splitMsg = msgArr[i];
+      if(splitMsg.indexOf(strEnd) != -1) {
+        // sometimes these messages show up in channel joins, or image shares
+        // which look like @<userid|name> other times it's an @<userid>: in a
+        // chat, need a length to switch and tack on to account for both
+        var endLen = 1;
+        var substrToReplace = splitMsg.substring(0,
+          splitMsg.indexOf(strEnd) + endLen);
+        if(substrToReplace.indexOf(splitter) != -1) {
+          strEnd = splitter;
+        }
+        var userId = substrToReplace.substring(0,
+          substrToReplace.indexOf(strEnd));
+        if(userData[userId] != undefined) {
+          newMsg += splitMsg.replace(substrToReplace, "@" +
+            userData[userId].name);
+        } else {
+          newMsg += splitMsg;
+        }
+      } else {
+        newMsg += splitMsg;
+      }
+    }
+  } else {
+    newMsg = msg;
+  }
+  return newMsg;
+}
 
 /* Builds the channel header html */
 function buildChannelHeader(id, name, purpose, archived) {
@@ -85,7 +130,7 @@ function buildChannelMsg(avatar, msg, username, date) {
     avatar = "&nbsp;";
   }
   if(username != null) {
-    username = "<b>" + username + "</b>";
+    username = "<b>" + username + "</b>&nbsp;&nbsp;&nbsp;";
   } else {
     username = "&nbsp;";
   }
