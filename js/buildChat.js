@@ -21,34 +21,8 @@ onmessage = function(e) {
       // grabs the files in from JSZip in a seemingly random order which ends
       // up with a jumbled chat log
       channelData["messages"] = orderMessagesByDate(channelData["messages"]);
-      // Indention in style of HTML for easier reading
-      // 2 spaces of indention for each nested element
-      var channelChat =
-        buildElement("div", "chat-" + channel.id,
-          "col-lg-10 col-md-10 col-sm-9 col-xs-6 hideme") +
-          buildElement("div", null, "table-responsive") +
-            buildElement("table", null, "table") +
-              buildElement("tr", null, null) +
-                buildElement("td", null, "channelheadertd") +
-                  buildElement("h2", null, "channelheader") +
-                    channel.name +
-                  closeElement("h2") +
-                closeElement("td") +
-                buildElement("td", null, "channelheadertd") +
-                  buildElement("h4", null, "channelpurpose") +
-                    channelData["purpose"] +
-                  closeElement("h4") +
-                closeElement("td") +
-                buildElement("td", null, "channelheadertd") +
-                  buildElement("b", null, "channelarchived") +
-                    "[Archived: " + channelData["is_archived"] + "]" +
-                  closeElement("b") +
-                closeElement("td") +
-              closeElement("tr") +
-            closeElement("table") +
-          closeElement("div") +
-          buildElement("div", null, "table-responsive") +
-            buildElement("table", null, "table table-striped");
+      var channelChat = buildChannelHeader(channel.id, channel.name,
+        channelData["purpose"], channelData["is_archived"]);
       // loop over all messages
       for(var i=0, len=channelData["messages"].length; i<len; i++) {
         var msg = channelData["messages"][i];
@@ -56,20 +30,10 @@ onmessage = function(e) {
         var d = new Date(msg.ts * 1000);
         // might lose a few messages here; TODO: Fix
         if(userData[msg.user] != undefined) {
-          channelChat +=
-            buildElement("tr", null, null) +
-              buildElement("td", null, null) +
-                "<img src='" + userData[msg.user].avatar + "'/>" +
-              closeElement("td") +
-              buildElement("td", null, null) +
-                buildElement("div", null, null) +
-                  "<i>" + d.toUTCString() + "</i>" +
-                closeElement("div") +
-                buildElement("div", null, null) +
-                  msg.text +
-                closeElement("div") +
-              closeElement("td") +
-            closeElement("tr");
+          channelChat += buildChannelMsg(userData[msg.user].avatar, msg.text);
+        } else {
+          console.log("Userdata not found for: " + msg.user);
+          console.log("Message was: " + msg.text);
         }
       }
       channelChat += closeElement("table") + closeElement("div");
@@ -80,6 +44,53 @@ onmessage = function(e) {
     break;
   }
 };
+
+function buildChannelHeader(id, name, purpose, archived) {
+  // Indention in style of HTML for easier reading
+  // 2 spaces of indention for each nested element
+  return buildElement("div", "chat-" + id,
+    "col-lg-10 col-md-10 col-sm-9 col-xs-6 hideme") +
+    buildElement("div", null, "table-responsive") +
+      buildElement("table", null, "table") +
+        buildElement("tr", null, null) +
+          buildElement("td", null, "channelheadertd") +
+            buildElement("h2", null, "channelheader") +
+              name +
+            closeElement("h2") +
+          closeElement("td") +
+          buildElement("td", null, "channelheadertd") +
+            buildElement("h4", null, "channelpurpose") +
+              purpose +
+            closeElement("h4") +
+          closeElement("td") +
+          buildElement("td", null, "channelheadertd") +
+            buildElement("i", null, "channelarchived") +
+              "[Archived: " + archived + "]" +
+            closeElement("i") +
+          closeElement("td") +
+        closeElement("tr") +
+      closeElement("table") +
+    closeElement("div") +
+    buildElement("div", null, "table-responsive") +
+      buildElement("table", null, "table table-striped");
+}
+
+function buildChannelMsg(avatar, msg, username) {
+  return buildElement("tr", null, null) +
+    buildElement("td", null, null) +
+      "<img src='" + avatar + "'/>" +
+    closeElement("td") +
+    buildElement("td", null, null) +
+      buildElement("div", null, null) +
+        "<i>" + d.toUTCString() + "</i>" +
+      closeElement("div") +
+      buildElement("div", null, null) +
+        msg +
+      closeElement("div") +
+    closeElement("td") +
+  closeElement("tr");
+}
+
 // Utility functions
 function buildElement(element, id, classes) {
   id = buildAttribute("id", id);
