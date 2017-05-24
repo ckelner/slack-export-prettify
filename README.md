@@ -28,3 +28,9 @@ the following tools/libraries:
 
 Choose your favorite web server and point it at this directory, or open
 `index.html` with your favorite browser. Completely client side!
+
+# Inspiration
+
+Some inspiration taken from a friend who also belonged to the same Slack team
+as myself when this idea of a "viewer" came into being. Please see their
+project @ https://github.com/bsimpson/slack_viewer
