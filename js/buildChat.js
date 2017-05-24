@@ -1,40 +1,107 @@
-// def not super proud of this - no framework or backend, so some big hacks
-self.addEventListener('message', function(e) {
+/*
+Not super proud of this - no framework or backend, so some ugly hacks.
+jQuery ($) is not available to web workers (nor is the dom) - so we resort to
+"building" HTML as strings that get returned on the message object to the main
+thread.
+*/
+onmessage = function(e) {
+  // check what the worker should do, only two commands, process and stop/kill
   switch (e.data.cmd) {
     case 'process':
+      /*
+      - channel is the channel id and name object that we're concerned with
+      - channelData has the messages array where each entry is a message for
+        that specific channel
+      - userData is info on all the users of the slack team
+      */
       var channel = e.data.channel;
       var channelData = e.data.channelData;
       var userData = e.data.userData;
-      var channelChat = "<div id='chat-" + channel.id + "'" +
-        "class='col-lg-10 col-md-10 col-sm-9 col-xs-6 hideme'>" +
-        "<div class='table-responsive'>" +
-        "<table class='table'><tr><td class='channelheadertd'>" +
-        "<h2 class='channelheader'>" +
-          channel.name +
-        "</h2></td>" +
-        "<td class='channelheadertd'><h4 class='channelpurpose'>" +
-          channelData["purpose"] +
-        "</h4></td><td class='channelheadertd'><b class='channelarchived'>" +
-          "[Archived: " + channelData["is_archived"] +
-        "]</b></td></tr></table></div><div class='table-responsive'>" +
-        "<table class='table table-striped'>";
-      for(var i=0, len=channelData["messages"].length;
-        i<len; i++) {
+      // order all the messages by date - during concatenation, the for loop
+      // grabs the files in from JSZip in a seemingly random order which ends
+      // up with a jumbled chat log
+      channelData["messages"] = orderMessagesByDate(channelData["messages"]);
+      // Indention in style of HTML for easier reading
+      // 2 spaces of indention for each nested element
+      var channelChat =
+        buildElement("div", "chat-" + channel.id,
+          "col-lg-10 col-md-10 col-sm-9 col-xs-6 hideme") +
+          buildElement("div", null, "table-responsive") +
+            buildElement("table", null, "table") +
+              buildElement("tr", null, null) +
+                buildElement("td", null, "channelheadertd") +
+                  buildElement("h2", null, "channelheader") +
+                    channel.name +
+                  closeElement("h2") +
+                closeElement("td") +
+                buildElement("td", null, "channelheadertd") +
+                  buildElement("h4", null, "channelpurpose") +
+                    channelData["purpose"] +
+                  closeElement("h4") +
+                closeElement("td") +
+                buildElement("td", null, "channelheadertd") +
+                  buildElement("b", null, "channelarchived") +
+                    "[Archived: " + channelData["is_archived"] + "]" +
+                  closeElement("b") +
+                closeElement("td") +
+              closeElement("tr") +
+            closeElement("table") +
+          closeElement("div") +
+          buildElement("div", null, "table-responsive") +
+            buildElement("table", null, "table table-striped");
+      // loop over all messages
+      for(var i=0, len=channelData["messages"].length; i<len; i++) {
         var msg = channelData["messages"][i];
         // x1000 to convert from epoch to UTC Seconds that JS Date understands
-        var d = new Date(msg.ts.substr(0, msg.ts.indexOf('.'))* 1000);
+        var d = new Date(msg.ts * 1000);
         // might lose a few messages here; TODO: Fix
         if(userData[msg.user] != undefined) {
-          channelChat += "<tr><td>" + "<img src='" + userData[msg.user].avatar +
-            "'/></td>" + "<td><div><i>" + d.toUTCString() + "</i></div><div>" +
-            msg.text + "</div></td></tr>";
+          channelChat +=
+            buildElement("tr", null, null) +
+              buildElement("td", null, null) +
+                "<img src='" + userData[msg.user].avatar + "'/>" +
+              closeElement("td") +
+              buildElement("td", null, null) +
+                buildElement("div", null, null) +
+                  "<i>" + d.toUTCString() + "</i>" +
+                closeElement("div") +
+                buildElement("div", null, null) +
+                  msg.text +
+                closeElement("div") +
+              closeElement("td") +
+            closeElement("tr");
         }
       }
-      channelChat += "</table></div>";
+      channelChat += closeElement("table") + closeElement("div");
       self.postMessage({"html": channelChat, "channelId": channel.id});
     break;
     case 'stop':
       self.close();
     break;
   }
-}, false);
+};
+// Utility functions
+function buildElement(element, id, classes) {
+  id = buildAttribute("id", id);
+  classes = buildAttribute("class", classes);
+  return "<" + element + id + classes + ">"
+}
+
+function buildAttribute(attr, value) {
+  if(value != null && value != '') {
+    return " " + attr + "='" + value + "'";
+  } else {
+    return "";
+  }
+}
+
+function closeElement(element) {
+  return "</" + element + ">"
+}
+
+function orderMessagesByDate(messages) {
+  messages.sort(function(a, b) {
+    return a.ts - b.ts;
+  });
+  return messages;
+}

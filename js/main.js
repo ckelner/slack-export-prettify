@@ -48,6 +48,10 @@ function fireWhenMessagesReady() {
   }
 }
 
+/*
+Waits until HTML has been "built" by web workers and set on the channelData
+object. See buildChannelChat() and buildChat.js
+*/
 function fireWhenHTMLReady() {
   var htmlRdy = true;
   // Fraught with error due to async nature - could only be half loaded
